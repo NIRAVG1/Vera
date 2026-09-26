@@ -102,9 +102,10 @@ async def healthz():
 @app.get("/v1/debug")
 async def debug():
     import os
+    openai_key = os.environ.get("OPENAI_API_KEY", "")
     groq_key = os.environ.get("GROQ_API_KEY", "")
     gemini_key = os.environ.get("GEMINI_API_KEY", "")
-    groq_model = os.environ.get("GROQ_MODEL", "not set")
+    groq_model = os.environ.get("GROQ_MODEL", "gpt-4o-mini")
     llm_base_url = os.environ.get("LLM_BASE_URL", "auto-detected")
 
     from composer import _get_client
@@ -125,10 +126,10 @@ async def debug():
             llm_error = f"{type(e).__name__}: {getattr(e, 'body', str(e))}"
 
     return {
+        "OPENAI_API_KEY_set": bool(openai_key),
+        "OPENAI_API_KEY_preview": openai_key[:8] + "..." if openai_key else "MISSING",
         "GROQ_API_KEY_set": bool(groq_key),
-        "GROQ_API_KEY_preview": groq_key[:6] + "..." if groq_key else "MISSING",
         "GEMINI_API_KEY_set": bool(gemini_key),
-        "GEMINI_API_KEY_preview": gemini_key[:6] + "..." if gemini_key else "MISSING",
         "GROQ_MODEL": groq_model,
         "LLM_BASE_URL": llm_base_url,
         "llm_client_initialized": client is not None,
