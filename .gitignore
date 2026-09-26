@@ -7,5 +7,3 @@ dashboard/node_modules/
 dashboard/dist/
 .DS_Store
 *.egg-info/
-challenge_files/
-expanded_dataset/
