@@ -96,6 +96,30 @@ async def healthz():
 
 
 # ---------------------------------------------------------------------------
+# GET /v1/debug
+# ---------------------------------------------------------------------------
+
+@app.get("/v1/debug")
+async def debug():
+    import os
+    groq_key = os.environ.get("GROQ_API_KEY", "")
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    groq_model = os.environ.get("GROQ_MODEL", "not set")
+
+    from composer import _get_client
+    client = _get_client()
+
+    return {
+        "GROQ_API_KEY_set": bool(groq_key),
+        "GROQ_API_KEY_preview": groq_key[:6] + "..." if groq_key else "MISSING",
+        "GEMINI_API_KEY_set": bool(gemini_key),
+        "GEMINI_API_KEY_preview": gemini_key[:6] + "..." if gemini_key else "MISSING",
+        "GROQ_MODEL": groq_model,
+        "llm_client_initialized": client is not None,
+    }
+
+
+# ---------------------------------------------------------------------------
 # GET /v1/metadata
 # ---------------------------------------------------------------------------
 
