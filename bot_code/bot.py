@@ -105,9 +105,24 @@ async def debug():
     groq_key = os.environ.get("GROQ_API_KEY", "")
     gemini_key = os.environ.get("GEMINI_API_KEY", "")
     groq_model = os.environ.get("GROQ_MODEL", "not set")
+    llm_base_url = os.environ.get("LLM_BASE_URL", "auto-detected")
 
     from composer import _get_client
     client = _get_client()
+
+    llm_test = None
+    llm_error = None
+    if client is not None:
+        try:
+            resp = client.chat.completions.create(
+                model=groq_model,
+                max_tokens=10,
+                temperature=0,
+                messages=[{"role": "user", "content": "Say hi"}],
+            )
+            llm_test = resp.choices[0].message.content
+        except Exception as e:
+            llm_error = f"{type(e).__name__}: {getattr(e, 'body', str(e))}"
 
     return {
         "GROQ_API_KEY_set": bool(groq_key),
@@ -115,7 +130,10 @@ async def debug():
         "GEMINI_API_KEY_set": bool(gemini_key),
         "GEMINI_API_KEY_preview": gemini_key[:6] + "..." if gemini_key else "MISSING",
         "GROQ_MODEL": groq_model,
+        "LLM_BASE_URL": llm_base_url,
         "llm_client_initialized": client is not None,
+        "llm_test_response": llm_test,
+        "llm_error": llm_error,
     }
 
 
