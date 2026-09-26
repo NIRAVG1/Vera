@@ -24,7 +24,7 @@ from typing import Any, Optional
 from validators import validate_and_fix
 
 _client = None
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "qwen/qwen3.8-27b")
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "gpt-4o-mini")
 
 
 def _get_client():
@@ -32,16 +32,23 @@ def _get_client():
     global _client
     if _client is not None:
         return _client
-    api_key = os.environ.get("GROQ_API_KEY") or os.environ.get("GEMINI_API_KEY")
-    if not api_key:
+
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    groq_key = os.environ.get("GROQ_API_KEY")
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+
+    if openai_key:
+        api_key = openai_key
+        base_url = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
+    elif groq_key:
+        api_key = groq_key
+        base_url = os.environ.get("LLM_BASE_URL", "https://api.groq.com/openai/v1")
+    elif gemini_key:
+        api_key = gemini_key
+        base_url = os.environ.get("LLM_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
+    else:
         return None
-    # Use Gemini endpoint if GEMINI_API_KEY is set, else fall back to Groq
-    base_url = os.environ.get(
-        "LLM_BASE_URL",
-        "https://generativelanguage.googleapis.com/v1beta/openai/"
-        if os.environ.get("GEMINI_API_KEY")
-        else "https://api.groq.com/openai/v1"
-    )
+
     try:
         import openai
         _client = openai.OpenAI(
