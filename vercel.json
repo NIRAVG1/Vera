@@ -19,6 +19,18 @@
       }
     },
     {
+      "source": "/docs",
+      "destination": {
+        "service": "vera-bot"
+      }
+    },
+    {
+      "source": "/openapi.json",
+      "destination": {
+        "service": "vera-bot"
+      }
+    },
+    {
       "source": "/(.*)",
       "destination": {
         "service": "dashboard"

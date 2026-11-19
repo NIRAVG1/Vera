@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Activity, MessageSquare, Database, Upload, Play } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Compose from './pages/Compose';
 import Dataset from './pages/Dataset';
 import ContextManager from './pages/ContextManager';
 import BatchRunner from './pages/BatchRunner';
+import { healthz } from './api/client';
 import './index.css';
 
 const NAV = [
@@ -24,9 +25,9 @@ export default function App() {
   const [page, setPage] = useState('dashboard');
   const [botOnline, setBotOnline] = useState(null);
 
-  // Check bot status on mount
-  useState(() => {
-    fetch('http://localhost:8080/v1/healthz')
+  // Check bot status on mount via shared API client
+  useEffect(() => {
+    healthz()
       .then(() => setBotOnline(true))
       .catch(() => setBotOnline(false));
   }, []);
@@ -87,7 +88,7 @@ export default function App() {
           <div className="status-pill">
             <div className={`status-dot ${botOnline === null ? '' : botOnline ? 'online' : 'offline'}`} />
             <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-              {botOnline === null ? 'Checking…' : botOnline ? 'Bot online :8080' : 'Bot offline'}
+              {botOnline === null ? 'Checking…' : botOnline ? 'Bot online' : 'Bot offline'}
             </span>
           </div>
         </div>

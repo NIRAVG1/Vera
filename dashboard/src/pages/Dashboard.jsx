@@ -18,7 +18,8 @@ export default function Dashboard() {
       setHealth(h);
       setMeta(m);
     } catch {
-      setError(`Cannot reach bot at ${import.meta.env.VITE_API_URL || 'http://localhost:8080'} — check VITE_API_URL or ensure bot is running.`);
+      const target = import.meta.env.VITE_API_URL || (window.location.origin + '/v1');
+      setError(`Cannot reach bot backend (${target}) — ensure the bot service is running and accessible.`);
     } finally {
       setLoading(false);
     }
