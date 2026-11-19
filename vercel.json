@@ -1,15 +1,15 @@
 {
   "version": 2,
-  "buildCommand": "cd dashboard && npm install && npm run build",
-  "outputDirectory": "dashboard/dist",
-  "rewrites": [
+  "builds": [
     {
-      "source": "/v1/:path*",
-      "destination": "https://vera-kok8.onrender.com/v1/:path*"
-    },
+      "src": "bot_code/api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "bot_code/api/index.py"
     }
   ]
 }
