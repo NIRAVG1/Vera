@@ -244,7 +244,8 @@ def _build_user_prompt(category: dict, merchant: dict, trigger: dict, customer: 
 # Fallback (no LLM available) — deterministic template composer
 # ---------------------------------------------------------------------------
 
-def _fallback_compose(category: dict, merchant: dict, trigger: dict, customer: Optional[dict]) -> dict:
+def _fallback_compose(category: dict, merchant: dict, trigger: dict, customer: Optional[dict] = None,
+                      reason: str = "no LLM configured") -> dict:
     identity = merchant.get("identity", {})
     name = identity.get("owner_first_name") or identity.get("name", "there")
     kind = trigger.get("kind", "")
@@ -280,7 +281,7 @@ def _fallback_compose(category: dict, merchant: dict, trigger: dict, customer: O
     return {
         "body": body,
         "cta": _default_cta_for(kind),
-        "rationale": "fallback template composer (no LLM configured)",
+        "rationale": f"fallback template composer ({reason})",
     }
 
 
@@ -295,12 +296,14 @@ def compose_message(category: dict, merchant: dict, trigger: dict, customer: Opt
 
     client = _get_client()
     if client is None:
-        result = _fallback_compose(category, merchant, trigger, customer)
+        result = _fallback_compose(category, merchant, trigger, customer, reason="no LLM configured: set OPENAI_API_KEY")
     else:
         user_prompt = _build_user_prompt(category, merchant, trigger, customer)
-        result = _call_llm(client, user_prompt)
-        if result is None:
-            result = _fallback_compose(category, merchant, trigger, customer)
+        llm_data, err_msg = _call_llm(client, user_prompt)
+        if llm_data is None:
+            result = _fallback_compose(category, merchant, trigger, customer, reason=f"LLM call failed: {err_msg}")
+        else:
+            result = llm_data
 
     result = validate_and_fix(
         result,
@@ -324,7 +327,7 @@ def compose_message(category: dict, merchant: dict, trigger: dict, customer: Opt
     }
 
 
-def _call_llm(client, user_prompt: str) -> Optional[dict]:
+def _call_llm(client, user_prompt: str) -> tuple[Optional[dict], Optional[str]]:
     import logging as _logging
     _log = _logging.getLogger("vera_composer")
     try:
@@ -336,7 +339,7 @@ def _call_llm(client, user_prompt: str) -> Optional[dict]:
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
             ],
-            response_format={"type": "json_object"},  # qwen/qwen3.8-27b supports JSON mode
+            response_format={"type": "json_object"},
         )
         text = resp.choices[0].message.content or ""
         text = text.strip()
@@ -347,13 +350,16 @@ def _call_llm(client, user_prompt: str) -> Optional[dict]:
         if m:
             text = m.group(0)
         if not text:
-            _log.error("[Composer] LLM returned empty content (model=%s)", GROQ_MODEL)
-            return None
+            err = f"empty output from model {GROQ_MODEL}"
+            _log.error("[Composer] %s", err)
+            return None, err
         data = json.loads(text)
         if "body" not in data:
-            _log.warning("[Composer] LLM returned JSON without 'body' key: %s", data)
-            return None
-        return data
+            err = f"JSON missing 'body' key: {data}"
+            _log.warning("[Composer] %s", err)
+            return None, err
+        return data, None
     except Exception as e:
-        _log.error("[Composer] LLM call failed: %s | body: %s", type(e).__name__, getattr(e, 'body', str(e)))
-        return None
+        err = f"{type(e).__name__}: {getattr(e, 'body', str(e))}"
+        _log.error("[Composer] LLM call failed: %s", err)
+        return None, err
