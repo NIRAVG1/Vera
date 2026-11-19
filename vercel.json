@@ -1,21 +1,28 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "bot_code/api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "includeFiles": [
-          "bot_code/**/*.py",
-          "bot_code/requirements.txt"
-        ]
-      }
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "vera-bot": {
+      "root": "bot_code",
+      "framework": "fastapi",
+      "buildCommand": "pip install -r requirements.txt"
+    },
+    "dashboard": {
+      "root": "dashboard",
+      "framework": "vite"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "bot_code/api/index.py"
+      "source": "/v1/(.*)",
+      "destination": {
+        "service": "vera-bot"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "dashboard"
+      }
     }
   ]
 }
