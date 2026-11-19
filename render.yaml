@@ -6,8 +6,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn bot:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: GEMINI_API_KEY
+      - key: OPENAI_API_KEY
         sync: false
       - key: GROQ_MODEL
-        value: models/gemini-3.1-flash-lite
+        value: gpt-4o-mini
     healthCheckPath: /v1/healthz
